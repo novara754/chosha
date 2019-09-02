@@ -16,17 +16,22 @@ WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
 APP_STATE App;
 
 VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
-	StringCchCopy(App.FilePath, MAX_PATH, FilePath);
+	if (FilePath != NULL) {
+		StringCchCopy(App.FilePath, MAX_PATH, FilePath);
 
-	WCHAR FileName[MAX_PATH];
-	ZeroMemory(FileName, MAX_PATH * sizeof(*FileName));
-	GetFileTitle(FilePath, FileName, MAX_PATH);
+		WCHAR FileName[MAX_PATH];
+		ZeroMemory(FileName, MAX_PATH * sizeof(*FileName));
+		GetFileTitle(FilePath, FileName, MAX_PATH);
 
-	WCHAR Title[MAX_PATH + 9];
-	ZeroMemory(Title, (MAX_PATH + 9) * sizeof(*Title));
-	StringCchCatW(Title, MAX_PATH + 9, FileName);
-	StringCchCatW(Title, MAX_PATH + 9, L" - Chosha");
-	SetWindowText(App.MainHandle, Title);
+		WCHAR Title[MAX_PATH + 9];
+		ZeroMemory(Title, (MAX_PATH + 9) * sizeof(*Title));
+		StringCchCatW(Title, MAX_PATH + 9, FileName);
+		StringCchCatW(Title, MAX_PATH + 9, L" - Chosha");
+		SetWindowText(App.MainHandle, Title);
+	} else {
+		SetWindowText(App.MainHandle, L"Untitled - Chosha");
+		ZeroMemory(App.FilePath, MAX_PATH * sizeof(*App.FilePath));
+	}
 }
 
 BOOL Chosha_OpenFile(CONST WCHAR *FilePath) {
@@ -109,6 +114,11 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 		case WM_COMMAND: {
 			UINT Id = LOWORD(WParam);
 			switch (Id) {
+				case ID_FILE_NEW: {
+					SetWindowText(App.EditHandle, L"");
+					Chosha_SetFilePath(NULL);
+					break;
+				}
 				case ID_FILE_OPEN: {
 					WCHAR FilePath[MAX_PATH];
 					ZeroMemory(FilePath, MAX_PATH * sizeof(*FilePath));
@@ -126,7 +136,24 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 					break;
 				}
 				case ID_FILE_SAVE: {
-					Chosha_SaveFile(App.FilePath);
+					if (App.FilePath[0] != 0) {
+						Chosha_SaveFile(App.FilePath);
+					} else {
+						WCHAR FilePath[MAX_PATH];
+						ZeroMemory(FilePath, MAX_PATH * sizeof(*FilePath));
+						OPENFILENAME Open = { 0 };
+						Open.lStructSize = sizeof(Open);
+						Open.hInstance = App.Instance;
+						Open.hwndOwner = Handle;
+						Open.lpstrTitle = L"Save As";
+						Open.lpstrFilter = L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+						Open.nMaxFile = MAX_PATH;
+						Open.lpstrFile = FilePath;
+						if (GetSaveFileName(&Open)) {
+							Chosha_SaveFile(FilePath);
+						}
+						break;
+					}
 					break;
 				}
 				case ID_FILE_SAVEAS: {
