@@ -234,7 +234,7 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 
 	ZeroMemory(&App, sizeof(App));
 	App.Instance = Instance;
-	App.MainHandle = CreateWindowEx(0, CHOSHA_WNDCLASS, L"Untitled - Chosha", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, NULL, NULL, Instance, NULL);
+	App.MainHandle = CreateWindowEx(0, CHOSHA_WNDCLASS, L"Untitled - Chosha", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, Instance, NULL);
 
 	MSG Msg = { 0 };
 	while (GetMessage(&Msg, NULL, 0, 0)) {
