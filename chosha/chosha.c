@@ -2,6 +2,8 @@
 #define _UNICODE
 #include <windows.h>
 #include <strsafe.h>
+#include <ShlObj_core.h>
+#include <Shlwapi.h>
 #include "resource.h"
 
 typedef struct {
@@ -10,6 +12,12 @@ typedef struct {
 	HWND MainHandle;
 	HWND EditHandle;
 	HFONT Font;
+	LOGFONT LogFont;
+	LONG X;
+	LONG Y;
+	LONG Width;
+	LONG Height;
+	WCHAR IniPath[MAX_PATH + 17];
 } APP_STATE;
 
 WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
@@ -100,6 +108,10 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | ES_MULTILINE, 0, 0, 0, 0, Handle, NULL, App.Instance, NULL);
 			ShowWindow(Handle, SW_SHOW);
 			ShowWindow(App.EditHandle, SW_SHOW);
+
+			App.Font = CreateFontIndirect(&App.LogFont);
+			SendMessage(App.EditHandle, WM_SETFONT, (WPARAM)App.Font, TRUE);
+
 			break;
 		}
 		case WM_SIZE: {
@@ -172,6 +184,10 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 					}
 					break;
 				}
+				case ID_FILE_SETTINGS: {
+					ShellExecute(NULL, NULL, App.IniPath, NULL, NULL, SW_SHOWNORMAL);
+					break;
+				}
 				case ID_FILE_EXIT: {
 					DestroyWindow(Handle);
 					break;
@@ -184,7 +200,11 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 					Dialog.hInstance = App.Instance;
 					Dialog.lpLogFont = &LogFont;
 					if (ChooseFont(&Dialog)) {
+						if (App.Font != NULL) {
+							DeleteObject(App.Font);
+						}
 						App.Font = CreateFontIndirect(&LogFont);
+						memcpy(&App.LogFont, &LogFont, sizeof(LogFont));
 						SendMessage(App.EditHandle, WM_SETFONT, (WPARAM)App.Font, TRUE);
 					}
 					break;
@@ -198,6 +218,13 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			break;
 		}
 		case WM_CLOSE: {
+			RECT Rect;
+			GetWindowRect(App.MainHandle, &Rect);
+			App.X = Rect.left;
+			App.Y = Rect.top;
+			App.Width = Rect.right - Rect.left;
+			App.Height = Rect.bottom - Rect.top;
+
 			DestroyWindow(Handle);
 			break;
 		}
@@ -226,6 +253,36 @@ BOOL Chosha_RegisterClass(HINSTANCE Instance) {
 	return RegisterClassEx(&WC) != 0;
 }
 
+BOOL WritePrivateProfileInt(CONST WCHAR *Section, CONST WCHAR *Key, INT Value, CONST WCHAR *FilePath) {
+	WCHAR ValueStr[32];
+	StringCchPrintf(ValueStr, 32, L"%d", Value);
+	return WritePrivateProfileString(Section, Key, ValueStr, FilePath);
+}
+
+VOID Chosha_SaveSettings(CONST WCHAR *IniPath) {
+	BOOL Success = WritePrivateProfileString(L"Font", L"Font", App.LogFont.lfFaceName, IniPath);
+	WritePrivateProfileInt(L"Font", L"Height", App.LogFont.lfHeight, IniPath);
+	WritePrivateProfileInt(L"Font", L"Weight", App.LogFont.lfWeight, IniPath);
+	WritePrivateProfileInt(L"Font", L"Italic", App.LogFont.lfItalic, IniPath);
+
+	WritePrivateProfileInt(L"Position", L"X", App.X, IniPath);
+	WritePrivateProfileInt(L"Position", L"Y", App.Y, IniPath);
+	WritePrivateProfileInt(L"Position", L"Width", App.Width, IniPath);
+	WritePrivateProfileInt(L"Position", L"Height", App.Height, IniPath);
+}
+
+VOID Chosha_LoadSettings(CONST WCHAR *IniPath) {
+	GetPrivateProfileString(L"Font", L"Font", L"Tahoma", App.LogFont.lfFaceName, LF_FACESIZE, IniPath);
+	App.LogFont.lfHeight = GetPrivateProfileInt(L"Font", L"Height", -27, IniPath);
+	App.LogFont.lfWeight = GetPrivateProfileInt(L"Font", L"Weight", 400, IniPath);
+	App.LogFont.lfItalic = GetPrivateProfileInt(L"Font", L"Italic", 0, IniPath);
+
+	App.X = GetPrivateProfileInt(L"Position", L"X", CW_USEDEFAULT, IniPath);
+	App.Y = GetPrivateProfileInt(L"Position", L"Y", CW_USEDEFAULT, IniPath);
+	App.Width = GetPrivateProfileInt(L"Position", L"Width", 640, IniPath);
+	App.Height = GetPrivateProfileInt(L"Position", L"Height", 480, IniPath);
+}
+
 INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT Show) {
 	if (!Chosha_RegisterClass(Instance)) {
 		MessageBox(NULL, L"Could not create window class.", L"Error", MB_OK | MB_ICONERROR);
@@ -233,14 +290,24 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 	}
 
 	ZeroMemory(&App, sizeof(App));
+	SHGetSpecialFolderPath(App.MainHandle, App.IniPath, CSIDL_APPDATA, FALSE);
+	PathCombine(App.IniPath, App.IniPath, L"chosha");
+	DWORD Attr = GetFileAttributes(App.IniPath);
+	if (Attr = INVALID_FILE_ATTRIBUTES) {
+		CreateDirectory(App.IniPath, NULL);
+	}
+	PathCombine(App.IniPath, App.IniPath, L"config.ini");
+	Chosha_LoadSettings(App.IniPath);
 	App.Instance = Instance;
-	App.MainHandle = CreateWindowEx(0, CHOSHA_WNDCLASS, L"Untitled - Chosha", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, Instance, NULL);
+	App.MainHandle = CreateWindowEx(0, CHOSHA_WNDCLASS, L"Untitled - Chosha", WS_OVERLAPPEDWINDOW, App.X, App.Y, App.Width, App.Height, NULL, NULL, Instance, NULL);
 
 	MSG Msg = { 0 };
 	while (GetMessage(&Msg, NULL, 0, 0)) {
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg);
 	}
+
+	Chosha_SaveSettings(App.IniPath);
 
 	return 0;
 }

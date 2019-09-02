@@ -11,6 +11,7 @@ Inspired by [Roger Clark's](https://github.com/rogerclark) project ["typer"](htt
  - Saving files
  - Saving files under a different name
  - Changing the editor's font
+ - Saving font and window last position/dimensions in .ini (%appdata%/chosha/config.ini)
 
 ## Known Bugs
 
