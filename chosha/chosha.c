@@ -11,6 +11,7 @@ typedef struct {
 	HINSTANCE Instance;
 	HWND MainHandle;
 	HWND EditHandle;
+	BOOL UnsavedChanges;
 	HFONT Font;
 	LOGFONT LogFont;
 	LONG X;
@@ -20,15 +21,17 @@ typedef struct {
 	WCHAR IniPath[MAX_PATH + 17];
 } APP_STATE;
 
+#define EDIT_ID 0x267 // Arbitrary Id to identify edit control
 WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
 APP_STATE App;
 /* - Updates window title bar to reflect the currently open file's name
    - Updates internal file path used for the save functionality
+   - Adds little star to title when there are unsaved changes
 */
 VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 	// FilePath can be set to NULL to reset the title bar as well as the internal file path.
 	// The save function will automatically prompt the user for a location when he tries to save this file.
-	if (FilePath != NULL) {
+	if (FilePath != NULL && FilePath[0] != 0) {
 		StringCchCopy(App.FilePath, MAX_PATH, FilePath);
 
 		// Get file name from complete path.
@@ -37,11 +40,19 @@ VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 		GetFileTitle(FilePath, FileName, MAX_PATH);
 
 		// Append ' - Chosha' to file name and set it as the window title. 
-		WCHAR Title[MAX_PATH + 9];
-		StringCchPrintf(Title, MAX_PATH + 9, L"%s - Chosha", FileName);
+		WCHAR Title[MAX_PATH + 10];
+		if (App.UnsavedChanges) {
+			StringCchPrintf(Title, MAX_PATH + 10, L"*%s - Chosha", FileName);
+		} else {
+			StringCchPrintf(Title, MAX_PATH + 10, L"%s - Chosha", FileName);
+		}
 		SetWindowText(App.MainHandle, Title);
 	} else {
-		SetWindowText(App.MainHandle, L"Untitled - Chosha");
+		if (App.UnsavedChanges) {
+			SetWindowText(App.MainHandle, L"*Untitled - Chosha");
+		} else {
+			SetWindowText(App.MainHandle, L"Untitled - Chosha");
+		}
 		ZeroMemory(App.FilePath, MAX_PATH * sizeof(*App.FilePath));
 	}
 }
@@ -100,6 +111,7 @@ BOOL Chosha_SaveFile(CONST WCHAR *FilePath) {
 			BOOL Success = WriteFile(File, FileBuffer, BUFFER_SIZE, NULL, NULL);
 			
 			if (Success) {
+				App.UnsavedChanges = FALSE;
 				Chosha_SetFilePath(FilePath);
 			}
 		}
@@ -116,7 +128,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 	switch (Msg) {
 		case WM_CREATE: {
 			// The EDIT window class belongs to a simple textfield
-			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | ES_MULTILINE, 0, 0, 0, 0, Handle, NULL, App.Instance, NULL);
+			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | ES_MULTILINE, 0, 0, 0, 0, Handle, (HMENU)EDIT_ID, App.Instance, NULL);
 			ShowWindow(Handle, SW_SHOW);
 			ShowWindow(App.EditHandle, SW_SHOW);
 
@@ -137,10 +149,19 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			break;
 		}
 		// The WM_COMMAND Message gets sent when the user has clicked on one of the items in the menu bar.
+		// Also handles messages from child-windows, namely the textfield (edit control).
 		case WM_COMMAND: {
 			// The Id specifies which exactly menu item was selected.
 			UINT Id = LOWORD(WParam);
 			switch (Id) {
+				case EDIT_ID: {
+					UINT Notif = HIWORD(WParam);
+					if (Notif == EN_CHANGE) {
+						App.UnsavedChanges = TRUE;
+						Chosha_SetFilePath(App.FilePath);
+					}
+					break;
+				}
 				case ID_FILE_NEW: {
 					// Create a new empty editor and reset the file path.
 					SetWindowText(App.EditHandle, L"");
@@ -244,6 +265,15 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			break;
 		}
 		case WM_CLOSE: {
+			if (App.UnsavedChanges) {
+				INT Answer = MessageBox(App.MainHandle, L"There are unsaved changes, any unsaved changes will be lost.\nExit anyway?",
+					L"Unsaved changes", MB_OKCANCEL | MB_ICONWARNING);
+
+				if (Answer == IDCANCEL) {
+					return;
+				}
+			}
+
 			// Before destroying the window, store dimensions and position so they can be written to the settings file.
 			RECT Rect;
 			GetWindowRect(App.MainHandle, &Rect);
