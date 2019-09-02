@@ -38,23 +38,17 @@ BOOL Chosha_OpenFile(CONST WCHAR *FilePath) {
 		return FALSE;
 	}
 
-	BYTE *FileBuffer = HeapAlloc(GetProcessHeap(), 0, 1024 * 1024);
+	SIZE_T BufferSize = 1024 * 1024;
+	BYTE *FileBuffer = HeapAlloc(GetProcessHeap(), 0, BufferSize);
 	if (FileBuffer == NULL) {
 		MessageBox(App.MainHandle, L"Failed to allocate memory.", L"Error allocating memory", MB_OK | MB_ICONERROR);
 		CloseHandle(File);
 		return FALSE;
 	}
 
-	BYTE *FilePos = FileBuffer;
-	enum { BUFFER_SIZE = 4096 };
-	BYTE Buffer[BUFFER_SIZE];
-	DWORD BytesRead = -1;
-	while (BytesRead != 0) {
-		ReadFile(File, Buffer, BUFFER_SIZE, &BytesRead, NULL);
-		memcpy(FilePos, Buffer, BytesRead);
-		FilePos += BytesRead;
-	}
-	*FilePos = 0;
+	DWORD BytesRead = 0;
+	ReadFile(File, FileBuffer, BufferSize, &BytesRead, NULL);
+	FileBuffer[BytesRead] = 0;
 
 	SetWindowText(App.EditHandle, (WCHAR*)FileBuffer);
 
