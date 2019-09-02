@@ -38,9 +38,7 @@ VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 
 		// Append ' - Chosha' to file name and set it as the window title. 
 		WCHAR Title[MAX_PATH + 9];
-		ZeroMemory(Title, (MAX_PATH + 9) * sizeof(*Title));
-		StringCchCatW(Title, MAX_PATH + 9, FileName);
-		StringCchCatW(Title, MAX_PATH + 9, L" - Chosha");
+		StringCchPrintf(Title, MAX_PATH + 9, L"%s - Chosha", FileName);
 		SetWindowText(App.MainHandle, Title);
 	} else {
 		SetWindowText(App.MainHandle, L"Untitled - Chosha");
