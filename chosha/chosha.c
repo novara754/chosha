@@ -309,6 +309,7 @@ BOOL Chosha_RegisterClass(HINSTANCE Instance) {
 	WC.hInstance = Instance;
 	WC.lpszClassName = CHOSHA_WNDCLASS;
 	WC.lpszMenuName = MAKEINTRESOURCE(ID_MENU);
+	WC.hIcon = LoadIcon(Instance, MAKEINTRESOURCE(ID_ICON));
 
 	return RegisterClassEx(&WC) != 0;
 }
