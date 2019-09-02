@@ -88,8 +88,7 @@ BOOL Chosha_SaveFile(CONST WCHAR *FilePath) {
 			MessageBox(App.MainHandle, L"Could not save the file.", L"Error saving file", MB_OK | MB_ICONERROR);
 			Success = FALSE;
 		} else {
-			DWORD BytesWritten = -1;
-			BOOL Success = WriteFile(File, FileBuffer, BUFFER_SIZE, &BytesWritten, NULL);
+			BOOL Success = WriteFile(File, FileBuffer, BUFFER_SIZE, NULL, NULL);
 			
 			if (Success) {
 				Chosha_SetFilePath(FilePath);
