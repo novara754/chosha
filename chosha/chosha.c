@@ -34,30 +34,24 @@ APP_STATE App;
 VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 	// FilePath can be set to NULL to reset the title bar as well as the internal file path.
 	// The save function will automatically prompt the user for a location when he tries to save this file.
-	if (FilePath != NULL && FilePath[0] != 0) {
+	BOOL EmptyPath = FilePath == NULL || FilePath[0] == 0;
+
+	WCHAR FileName[MAX_PATH];
+	if (!EmptyPath) {
 		StringCchCopy(App.FilePath, MAX_PATH, FilePath);
 
-		// Get file name from complete path.
-		WCHAR FileName[MAX_PATH];
-		ZeroMemory(FileName, MAX_PATH * sizeof(*FileName));
+		// ZeroMemory(FileName, MAX_PATH * sizeof(*FileName));
 		GetFileTitle(FilePath, FileName, MAX_PATH);
-
-		// Append ' - Chosha' to file name and set it as the window title. 
-		WCHAR Title[MAX_PATH + 10];
-		if (App.UnsavedChanges) {
-			StringCchPrintf(Title, MAX_PATH + 10, L"*%s - Chosha", FileName);
-		} else {
-			StringCchPrintf(Title, MAX_PATH + 10, L"%s - Chosha", FileName);
-		}
-		SetWindowText(App.MainHandle, Title);
 	} else {
-		if (App.UnsavedChanges) {
-			SetWindowText(App.MainHandle, L"*Untitled - Chosha");
-		} else {
-			SetWindowText(App.MainHandle, L"Untitled - Chosha");
-		}
+		StringCchCopy(FileName, MAX_PATH, L"Untitled");
 		ZeroMemory(App.FilePath, MAX_PATH * sizeof(*App.FilePath));
 	}
+
+	// Append ' - Chosha' to file name and set it as the window title. 
+	WCHAR Title[MAX_PATH + 10];
+	StringCchPrintf(Title, MAX_PATH + 10, L"%s%s - Chosha", App.UnsavedChanges ? L"*" : L"", FileName);
+
+	SetWindowText(App.MainHandle, Title);
 }
 
 /* Read content from a file into the editor
