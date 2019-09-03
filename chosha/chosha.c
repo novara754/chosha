@@ -4,6 +4,7 @@
 #include <strsafe.h>
 #include <ShlObj_core.h>
 #include <Shlwapi.h>
+#include <windowsx.h>
 #include "resource.h"
 
 typedef struct {
@@ -122,6 +123,38 @@ BOOL Chosha_SaveFile(CONST WCHAR *FilePath) {
 	return Success;
 }
 
+VOID Chosha_Copy(BOOL Cut) {
+	DWORD Start, End, Length;
+	SendMessage(App.EditHandle, EM_GETSEL, (WPARAM)&Start, (LPARAM)&End);
+	if (Start == End) {
+		return;
+	}
+	End += 1;
+	Length = End - Start;
+
+	// The number of unicode chars does not match the number of bytes, so just 
+	// allocate two bytes for every char for now.
+	// TODO: Make this prettier.
+	WCHAR *Buffer = (WCHAR*)HeapAlloc(GetProcessHeap(), 0, 2 * End);
+	GetWindowText(App.EditHandle, Buffer, End);
+
+	WCHAR *ClipboardText = (WCHAR*)HeapAlloc(GetProcessHeap(), 0, 2 * Length);
+	StringCchCopy(ClipboardText, 2 * Length, Buffer + Start);
+
+	if (OpenClipboard(App.MainHandle)) {
+		if (EmptyClipboard()) {
+			SetClipboardData(CF_UNICODETEXT, (HANDLE)ClipboardText);
+			if (Cut) {
+				Edit_ReplaceSel(App.EditHandle, L"");
+			}
+		}
+
+		CloseClipboard();
+	}
+
+	HeapFree(GetProcessHeap(), 0, Buffer);
+}
+
 /* Handle event messages
 */
 LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LParam) {
@@ -233,6 +266,43 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 					// Simply closes the window.
 					// TODO: Warn the user if there are any unsaved changes.
 					DestroyWindow(Handle);
+					break;
+				}
+				case ID_EDIT_UNDO: {
+					Edit_Undo(App.EditHandle);
+					break;
+				}
+				case ID_EDIT_CUT: {
+					Chosha_Copy(TRUE);
+					break;
+				}
+				case ID_EDIT_COPY: {
+					Chosha_Copy(FALSE);
+					break;
+				}
+				case ID_EDIT_PASTE: {
+					if (!OpenClipboard(App.MainHandle)) {
+						return;
+					}
+
+					UINT Formats[] = { CF_UNICODETEXT, CF_TEXT };
+					UINT Format = GetPriorityClipboardFormat(Formats, 2);
+					if (Format) {
+						HANDLE Text = GetClipboardData(Format);
+						if (!Text) {
+							return;
+						}
+						Edit_ReplaceSel(App.EditHandle, Text);
+					}
+					break;
+				}
+				case ID_EDIT_DELETE: {
+					Edit_ReplaceSel(App.EditHandle, L"");
+					break;
+				}
+				case ID_EDIT_SELECTALL: {
+					DWORD End = Edit_GetTextLength(App.EditHandle);
+					Edit_SetSel(App.EditHandle, 0, End);
 					break;
 				}
 				case ID_FORMAT_FONT: {
