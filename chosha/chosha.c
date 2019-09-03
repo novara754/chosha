@@ -157,7 +157,9 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 	switch (Msg) {
 		case WM_CREATE: {
 			// The EDIT window class belongs to a simple textfield
-			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | ES_MULTILINE, 0, 0, 0, 0, Handle, (HMENU)EDIT_ID, App.Instance, NULL);
+			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"",
+				WS_CHILD | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
+				0, 0, 0, 0, Handle, (HMENU)EDIT_ID, App.Instance, NULL);
 			ShowWindow(Handle, SW_SHOW);
 			ShowWindow(App.EditHandle, SW_SHOW);
 
