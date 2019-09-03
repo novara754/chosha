@@ -13,6 +13,8 @@ Inspired by [Roger Clark's](https://github.com/rogerclark) project ["typer"](htt
  - Changing the editor's font
  - Saving font and window last position/dimensions in .ini (%appdata%/chosha/config.ini)
  - Warn about unsaved changes, and indicate them using an `*` in the title bar
+ - Standard functions like copy/paste, undo
+ - Common keyboard shortcuts
 
 ## Known Bugs
 
