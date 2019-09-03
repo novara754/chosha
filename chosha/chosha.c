@@ -12,6 +12,7 @@ typedef struct {
 	HINSTANCE Instance;
 	HWND MainHandle;
 	HWND EditHandle;
+	HACCEL Accel;
 	BOOL UnsavedChanges;
 	HFONT Font;
 	LOGFONT LogFont;
@@ -25,6 +26,7 @@ typedef struct {
 #define EDIT_ID 0x267 // Arbitrary Id to identify edit control
 WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
 APP_STATE App;
+
 /* - Updates window title bar to reflect the currently open file's name
    - Updates internal file path used for the save functionality
    - Adds little star to title when there are unsaved changes
@@ -363,9 +365,12 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			PostQuitMessage(0);
 			break;
 		}
+		default: {
+			return DefWindowProc(Handle, Msg, WParam, LParam);
+		}
 	}
 
-	return DefWindowProc(Handle, Msg, WParam, LParam);
+	return 0;
 }
 
 /* Helper function to register the window class
@@ -438,10 +443,12 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 	Chosha_LoadSettings(App.IniPath);
 	App.Instance = Instance;
 	App.MainHandle = CreateWindowEx(0, CHOSHA_WNDCLASS, L"Untitled - Chosha", WS_OVERLAPPEDWINDOW, App.X, App.Y, App.Width, App.Height, NULL, NULL, Instance, NULL);
+	App.Accel = LoadAccelerators(App.Instance, MAKEINTRESOURCE(ID_ACCEL));
 
 	/* Event loop */
 	MSG Msg = { 0 };
 	while (GetMessage(&Msg, NULL, 0, 0)) {
+		TranslateAccelerator(App.MainHandle, App.Accel, &Msg);
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg);
 	}
