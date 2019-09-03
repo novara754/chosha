@@ -442,8 +442,6 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 	/* Event loop */
 	MSG Msg = { 0 };
 	while (GetMessage(&Msg, NULL, 0, 0)) {
-		// TranslateAccelerator dispatches messages itself.
-		// If it does not find a matching accelerator run the standard message loop.
 		if (!TranslateAccelerator(App.MainHandle, App.Accel, &Msg)) {
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg);
