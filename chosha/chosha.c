@@ -260,7 +260,6 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 				}
 				case ID_FILE_EXIT: {
 					// Simply closes the window.
-					// TODO: Warn the user if there are any unsaved changes.
 					DestroyWindow(Handle);
 					break;
 				}
