@@ -25,7 +25,7 @@ typedef struct {
 
 #define EDIT_ID 0x267 // Arbitrary Id to identify edit control
 WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
-APP_STATE App;
+APP_STATE App = { 0 };
 
 /* - Updates window title bar to reflect the currently open file's name
    - Updates internal file path used for the save functionality
@@ -40,7 +40,6 @@ VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 	if (!EmptyPath) {
 		StringCchCopy(App.FilePath, MAX_PATH, FilePath);
 
-		// ZeroMemory(FileName, MAX_PATH * sizeof(*FileName));
 		GetFileTitle(FilePath, FileName, MAX_PATH);
 	} else {
 		StringCchCopy(FileName, MAX_PATH, L"Untitled");
@@ -201,8 +200,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 				}
 				case ID_FILE_OPEN: {
 					// Open a dialog window to let the user select a file to open.
-					WCHAR FilePath[MAX_PATH];
-					ZeroMemory(FilePath, MAX_PATH * sizeof(*FilePath));
+					WCHAR FilePath[MAX_PATH] = { 0 };
 					OPENFILENAME Open = { 0 };
 					Open.lStructSize = sizeof(Open);
 					Open.hInstance = App.Instance;
@@ -220,8 +218,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 					// If the app's filepath is zeroed an untitled file is open.
 					// In that case ask the user for a location, otherwise just use the path we already have.
 					if (App.FilePath[0] == 0) {
-						WCHAR FilePath[MAX_PATH];
-						ZeroMemory(FilePath, MAX_PATH * sizeof(*FilePath));
+						WCHAR FilePath[MAX_PATH] = { 0 };
 						OPENFILENAME Open = { 0 };
 						Open.lStructSize = sizeof(Open);
 						Open.hInstance = App.Instance;
@@ -240,8 +237,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 				}
 				case ID_FILE_SAVEAS: {
 					// Similar to the 'save' action, but always prompts the user for a file location.
-					WCHAR FilePath[MAX_PATH];
-					ZeroMemory(FilePath, MAX_PATH * sizeof(*FilePath));
+					WCHAR FilePath[MAX_PATH] = { 0 };
 					OPENFILENAME Open = { 0 };
 					Open.lStructSize = sizeof(Open);
 					Open.hInstance = App.Instance;
@@ -372,7 +368,6 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 */
 BOOL Chosha_RegisterClass(HINSTANCE Instance) {
 	WNDCLASSEX WC = { 0 };
-	ZeroMemory(&WC, sizeof(WC));
 	WC.cbSize = sizeof(WC);
 	WC.style = CS_HREDRAW | CS_VREDRAW;
 	WC.lpfnWndProc = Chosha_WndProc;
@@ -426,7 +421,6 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 		return 1;
 	}
 
-	ZeroMemory(&App, sizeof(App));
 	SHGetSpecialFolderPath(App.MainHandle, App.IniPath, CSIDL_APPDATA, FALSE);
 	PathCombine(App.IniPath, App.IniPath, L"chosha");
 	// INVALID_FILE_ATTRIBUTES tells us the folder for the config file does not yet exist and has to be created.
