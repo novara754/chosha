@@ -23,7 +23,6 @@ typedef struct {
 	WCHAR IniPath[MAX_PATH + 17];
 } APP_STATE;
 
-#define EDIT_ID 0x267 // Arbitrary Id to identify edit control
 WCHAR *CHOSHA_WNDCLASS = L"CHOSHA";
 APP_STATE App = { 0 };
 
@@ -158,7 +157,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			// The EDIT window class belongs to a simple textfield
 			App.EditHandle = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"",
 				WS_CHILD | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-				0, 0, 0, 0, Handle, (HMENU)EDIT_ID, App.Instance, NULL);
+				0, 0, 0, 0, Handle, (HMENU)ID_EDIT_CONTROL, App.Instance, NULL);
 			ShowWindow(Handle, SW_SHOW);
 			ShowWindow(App.EditHandle, SW_SHOW);
 

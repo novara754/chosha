@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by chosha.rc
 //
+#define ID_EDIT_CONTROL                 615
 #define ID_MENU                         4
 #define ID_ICON                         5
 #define ID_ACCEL                        109
