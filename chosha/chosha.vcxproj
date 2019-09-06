@@ -132,7 +132,7 @@
     <ResourceCompile Include="chosha.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="C:\Users\vzwGrey\Downloads\icon.ico" />
+    <Image Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

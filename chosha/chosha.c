@@ -183,7 +183,7 @@ LRESULT CALLBACK Chosha_WndProc(HWND Handle, UINT Msg, WPARAM WParam, LPARAM LPa
 			// The Id specifies which exactly menu item was selected.
 			UINT Id = LOWORD(WParam);
 			switch (Id) {
-				case EDIT_ID: {
+				case ID_EDIT_CONTROL: {
 					UINT Notif = HIWORD(WParam);
 					if (Notif == EN_CHANGE) {
 						App.UnsavedChanges = TRUE;
@@ -373,7 +373,7 @@ BOOL Chosha_RegisterClass(HINSTANCE Instance) {
 	WC.hInstance = Instance;
 	WC.lpszClassName = CHOSHA_WNDCLASS;
 	WC.lpszMenuName = MAKEINTRESOURCE(ID_MENU);
-	WC.hIcon = LoadIcon(Instance, MAKEINTRESOURCE(ID_ICON));
+	WC.hIcon = LoadIcon(Instance, MAKEINTRESOURCE(IDI_ICON));
 
 	return RegisterClassEx(&WC) != 0;
 }
