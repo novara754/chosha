@@ -45,7 +45,7 @@ VOID Chosha_SetFilePath(CONST WCHAR *FilePath) {
 		ZeroMemory(App.FilePath, MAX_PATH * sizeof(*App.FilePath));
 	}
 
-	// Append ' - Chosha' to file name and set it as the window title. 
+	// Append ' - Chosha' to file name and set it as the window title.
 	WCHAR Title[MAX_PATH + 10];
 	StringCchPrintf(Title, MAX_PATH + 10, L"%s%s - Chosha", App.UnsavedChanges ? L"*" : L"", FileName);
 
@@ -104,7 +104,7 @@ BOOL Chosha_SaveFile(CONST WCHAR *FilePath) {
 			Success = FALSE;
 		} else {
 			BOOL Success = WriteFile(File, FileBuffer, BUFFER_SIZE, NULL, NULL);
-			
+
 			if (Success) {
 				App.UnsavedChanges = FALSE;
 				Chosha_SetFilePath(FilePath);
@@ -126,7 +126,7 @@ VOID Chosha_Copy(BOOL Cut) {
 	End += 1;
 	Length = End - Start;
 
-	// The number of unicode chars does not match the number of bytes, so just 
+	// The number of unicode chars does not match the number of bytes, so just
 	// allocate two bytes for every char for now.
 	// TODO: Make this prettier.
 	WCHAR *Buffer = (WCHAR*)HeapAlloc(GetProcessHeap(), 0, 2 * End);
@@ -424,7 +424,7 @@ INT WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, PSTR CmdLine, INT
 	PathCombine(App.IniPath, App.IniPath, L"chosha");
 	// INVALID_FILE_ATTRIBUTES tells us the folder for the config file does not yet exist and has to be created.
 	DWORD Attr = GetFileAttributes(App.IniPath);
-	if (Attr = INVALID_FILE_ATTRIBUTES) {
+	if (Attr == INVALID_FILE_ATTRIBUTES) {
 		CreateDirectory(App.IniPath, NULL);
 	}
 	PathCombine(App.IniPath, App.IniPath, L"config.ini");
